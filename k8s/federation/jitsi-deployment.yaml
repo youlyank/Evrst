@@ -1,0 +1,303 @@
+# Jitsi Meet Video Conferencing Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jitsi-web
+  namespace: elkzone-prod
+  labels:
+    app: jitsi-web
+    service: videoconf
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: jitsi-web
+  template:
+    metadata:
+      labels:
+        app: jitsi-web
+        service: videoconf
+    spec:
+      containers:
+      - name: jitsi-web
+        image: jitsi/web:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: JITSI_PROSODY_DOMAIN
+          value: "meet.elk.zone"
+        - name: JITSI_PUBLIC_URL
+          value: "https://meet.elk.zone"
+        - name: JITSI_CONFIG_EXTERNAL_CONNECT
+          value: "false"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+      volumes:
+      - name: config
+        configMap:
+          name: jitsi-config
+      - name: nginx-config
+        configMap:
+          name: jitsi-nginx-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jitsi-web
+  namespace: elkzone-prod
+  labels:
+    app: jitsi-web
+    service: videoconf
+spec:
+  selector:
+    app: jitsi-web
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  type: ClusterIP
+---
+# Jicofo (Focus Component)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jicofo
+  namespace: elkzone-prod
+  labels:
+    app: jicofo
+    service: videoconf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jicofo
+  template:
+    metadata:
+      labels:
+        app: jicofo
+        service: videoconf
+    spec:
+      containers:
+      - name: jicofo
+        image: jitsi/jicofo:latest
+        env:
+        - name: JITSI_PROSODY_DOMAIN
+          value: "meet.elk.zone"
+        - name: JITSI_AUTH_DOMAIN
+          value: "auth.meet.elk.zone"
+        - name: JITSI_XMPP_SERVER
+          value: "prosody"
+        - name: JICOFO_COMPONENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jitsi-secrets
+              key: JICOFO_COMPONENT_SECRET
+        - name: JICOFO_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: jitsi-secrets
+              key: JICOFO_AUTH_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "400m"
+---
+# JVB (Jitsi Videobridge)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jvb
+  namespace: elkzone-prod
+  labels:
+    app: jvb
+    service: videoconf
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: jvb
+  template:
+    metadata:
+      labels:
+        app: jvb
+        service: videoconf
+    spec:
+      containers:
+      - name: jvb
+        image: jitsi/jvb:latest
+        ports:
+        - containerPort: 9090
+        - containerPort: 8080
+        - containerPort: 4443
+        - containerPort: 10000
+          protocol: UDP
+        env:
+        - name: JITSI_PROSODY_DOMAIN
+          value: "meet.elk.zone"
+        - name: JITSI_XMPP_SERVER
+          value: "prosody"
+        - name: JVB_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: jitsi-secrets
+              key: JVB_AUTH_PASSWORD
+        - name: JVB_STUN_SERVERS
+          value: "stun.l.google.com:19302,stun1.l.google.com:19302,stun2.l.google.com:19302"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+---
+# Prosody (XMPP Server)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prosody
+  namespace: elkzone-prod
+  labels:
+    app: prosody
+    service: videoconf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prosody
+  template:
+    metadata:
+      labels:
+        app: prosody
+        service: videoconf
+    spec:
+      containers:
+      - name: prosody
+        image: jitsi/prosody:latest
+        ports:
+        - containerPort: 5222
+        - containerPort: 5280
+        - containerPort: 5347
+        env:
+        - name: JITSI_PROSODY_DOMAIN
+          value: "meet.elk.zone"
+        - name: JITSI_AUTH_DOMAIN
+          value: "auth.meet.elk.zone"
+        - name: JICOFO_COMPONENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jitsi-secrets
+              key: JICOFO_COMPONENT_SECRET
+        - name: JICOFO_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: jitsi-secrets
+              key: JICOFO_AUTH_PASSWORD
+        - name: JVB_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: jitsi-secrets
+              key: JVB_AUTH_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "400m"
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: config
+        configMap:
+          name: prosody-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: prosody-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prosody
+  namespace: elkzone-prod
+  labels:
+    app: prosody
+    service: videoconf
+spec:
+  selector:
+    app: prosody
+  ports:
+  - name: xmpp
+    port: 5222
+    targetPort: 5222
+  - name: http
+    port: 5280
+    targetPort: 5280
+  - name: component
+    port: 5347
+    targetPort: 5347
+  type: ClusterIP
+---
+# Jitsi Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jitsi-ingress
+  namespace: elkzone-prod
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  tls:
+  - hosts:
+    - meet.elk.zone
+    secretName: jitsi-tls
+  rules:
+  - host: meet.elk.zone
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: jitsi-web
+            port:
+              number: 80
+---
+# JVB UDP Service (for media traffic)
+apiVersion: v1
+kind: Service
+metadata:
+  name: jvb-udp
+  namespace: elkzone-prod
+  labels:
+    app: jvb
+    service: videoconf
+spec:
+  selector:
+    app: jvb
+  ports:
+  - name: udp-10000
+    port: 10000
+    targetPort: 10000
+    protocol: UDP
+  type: LoadBalancer

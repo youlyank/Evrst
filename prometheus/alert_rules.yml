@@ -1,0 +1,127 @@
+groups:
+  - name: elkzone.rules
+    rules:
+      # Application health alerts
+      - alert: ElkZoneDown
+        expr: up{job=~"elkzone-.*"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: elkzone
+        annotations:
+          summary: "ELK.Zone service is down"
+          description: "ELK.Zone {{ $labels.job }} has been down for more than 5 minutes"
+
+      - alert: ElkZoneHighMemoryUsage
+        expr: (elkzone_memory_bytes{type="heap_used"} / elkzone_memory_bytes{type="heap_total"}) * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+          service: elkzone
+        annotations:
+          summary: "High memory usage detected"
+          description: "ELK.Zone memory usage is above 90% for more than 10 minutes"
+
+      - alert: ElkZoneHighResponseTime
+        expr: elkzone_database_query_time_ms > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: elkzone
+        annotations:
+          summary: "High database response time"
+          description: "Database query time is {{ $value }}ms, above 1000ms threshold"
+
+      - alert: ElkZoneTooManyConnections
+        expr: elkzone_database_connections > 50
+        for: 5m
+        labels:
+          severity: warning
+          service: elkzone
+        annotations:
+          summary: "Too many database connections"
+          description: "Database has {{ $value }} active connections, above 50 threshold"
+
+      # System alerts
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsageSystem
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "Low disk space"
+          description: "Disk usage is {{ $value }}% on {{ $labels.instance }}:{{ $labels.mountpoint }}"
+
+      # Database alerts
+      - alert: PostgreSQLDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL server has been down for more than 5 minutes"
+
+      - alert: PostgreSQLTooManyConnections
+        expr: pg_stat_database_numbackends / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "PostgreSQL too many connections"
+          description: "PostgreSQL has {{ $value }}% connections used"
+
+      # Redis alerts
+      - alert: RedisDown
+        expr: up{job="redis-exporter"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis server has been down for more than 5 minutes"
+
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Redis memory usage is {{ $value }}%"
+
+      # Nginx alerts
+      - alert: NginxHighErrorRate
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) / rate(nginx_http_requests_total[5m]) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: webserver
+        annotations:
+          summary: "Nginx high error rate"
+          description: "Nginx error rate is {{ $value }}% over the last 5 minutes"

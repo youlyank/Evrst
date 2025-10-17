@@ -1,0 +1,189 @@
+# Matrix Synapse Federation Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matrix-synapse
+  namespace: elkzone-prod
+  labels:
+    app: matrix-synapse
+    service: matrix
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: matrix-synapse
+  template:
+    metadata:
+      labels:
+        app: matrix-synapse
+        service: matrix
+    spec:
+      containers:
+      - name: synapse
+        image: matrixdotorg/synapse:latest
+        ports:
+        - containerPort: 8008
+        env:
+        - name: SYNAPSE_SERVER_NAME
+          value: "matrix.elk.zone"
+        - name: SYNAPSE_REPORT_STATS
+          value: "false"
+        - name: SYNAPSE_CONFIG_PATH
+          value: "/data/homeserver.yaml"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: config
+          mountPath: /data/homeserver.yaml
+          subPath: homeserver.yaml
+        - name: signing-key
+          mountPath: /data/signing.key
+          subPath: signing.key
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: matrix-data-pvc
+      - name: config
+        configMap:
+          name: matrix-config
+      - name: signing-key
+        secret:
+          secretName: matrix-secrets
+          items:
+          - key: signing.key
+            path: signing.key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: matrix-synapse
+  namespace: elkzone-prod
+  labels:
+    app: matrix-synapse
+    service: matrix
+spec:
+  selector:
+    app: matrix-synapse
+  ports:
+  - name: http
+    port: 8008
+    targetPort: 8008
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: matrix-ingress
+  namespace: elkzone-prod
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  tls:
+  - hosts:
+    - matrix.elk.zone
+    secretName: matrix-tls
+  rules:
+  - host: matrix.elk.zone
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: matrix-synapse
+            port:
+              number: 8008
+---
+# Matrix Federation Port (Service)
+apiVersion: v1
+kind: Service
+metadata:
+  name: matrix-federation
+  namespace: elkzone-prod
+  labels:
+    app: matrix-synapse
+    service: matrix
+spec:
+  selector:
+    app: matrix-synapse
+  ports:
+  - name: federation
+    port: 8448
+    targetPort: 8448
+  type: LoadBalancer
+---
+# PostgreSQL for Matrix
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matrix-postgres
+  namespace: elkzone-prod
+  labels:
+    app: matrix-postgres
+    service: matrix
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matrix-postgres
+  template:
+    metadata:
+      labels:
+        app: matrix-postgres
+        service: matrix
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        env:
+        - name: POSTGRES_DB
+          value: "synapse"
+        - name: POSTGRES_USER
+          value: "synapse"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: POSTGRES_PASSWORD
+        ports:
+        - containerPort: 5432
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: matrix-postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: matrix-postgres
+  namespace: elkzone-prod
+  labels:
+    app: matrix-postgres
+    service: matrix
+spec:
+  selector:
+    app: matrix-postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP

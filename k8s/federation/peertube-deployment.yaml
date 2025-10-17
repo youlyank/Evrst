@@ -1,0 +1,237 @@
+# PeerTube Video Federation Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: peertube
+  namespace: elkzone-prod
+  labels:
+    app: peertube
+    service: video
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: peertube
+  template:
+    metadata:
+      labels:
+        app: peertube
+        service: video
+    spec:
+      containers:
+      - name: peertube
+        image: chocobozzz/peertube:production
+        ports:
+        - containerPort: 9000
+        env:
+        - name: PEERTUBE_WEBSERVER_HOSTNAME
+          value: "videos.elk.zone"
+        - name: PEERTUBE_WEBSERVER_PORT
+          value: "443"
+        - name: PEERTUBE_WEBSERVER_HTTPS
+          value: "true"
+        - name: PEERTUBE_DB_HOSTNAME
+          value: "peertube-postgres"
+        - name: PEERTUBE_DB_USERNAME
+          value: "peertube"
+        - name: PEERTUBE_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: peertube-secrets
+              key: POSTGRES_PASSWORD
+        - name: PEERTUBE_REDIS_HOSTNAME
+          value: "peertube-redis"
+        - name: PEERTUBE_ADMIN_EMAIL
+          value: "admin@elk.zone"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: config
+          mountPath: /config
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d/peertube.conf
+          subPath: peertube.conf
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: peertube-data-pvc
+      - name: config
+        persistentVolumeClaim:
+          claimName: peertube-config-pvc
+      - name: nginx-config
+        configMap:
+          name: peertube-nginx-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: peertube
+  namespace: elkzone-prod
+  labels:
+    app: peertube
+    service: video
+spec:
+  selector:
+    app: peertube
+  ports:
+  - name: http
+    port: 9000
+    targetPort: 9000
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: peertube-ingress
+  namespace: elkzone-prod
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/client-max-body-size: "100m"
+spec:
+  tls:
+  - hosts:
+    - videos.elk.zone
+    secretName: peertube-tls
+  rules:
+  - host: videos.elk.zone
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: peertube
+            port:
+              number: 9000
+---
+# PostgreSQL for PeerTube
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: peertube-postgres
+  namespace: elkzone-prod
+  labels:
+    app: peertube-postgres
+    service: video
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: peertube-postgres
+  template:
+    metadata:
+      labels:
+        app: peertube-postgres
+        service: video
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        env:
+        - name: POSTGRES_DB
+          value: "peertube"
+        - name: POSTGRES_USER
+          value: "peertube"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: peertube-secrets
+              key: POSTGRES_PASSWORD
+        ports:
+        - containerPort: 5432
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: peertube-postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: peertube-postgres
+  namespace: elkzone-prod
+  labels:
+    app: peertube-postgres
+    service: video
+spec:
+  selector:
+    app: peertube-postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+---
+# Redis for PeerTube
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: peertube-redis
+  namespace: elkzone-prod
+  labels:
+    app: peertube-redis
+    service: video
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: peertube-redis
+  template:
+    metadata:
+      labels:
+        app: peertube-redis
+        service: video
+    spec:
+      containers:
+      - name: redis
+        image: redis:7
+        ports:
+        - containerPort: 6379
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: peertube-redis-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: peertube-redis
+  namespace: elkzone-prod
+  labels:
+    app: peertube-redis
+    service: video
+spec:
+  selector:
+    app: peertube-redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  type: ClusterIP
