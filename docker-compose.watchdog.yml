@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  elkzone-watchdog:
+    build:
+      context: .
+      dockerfile: Dockerfile.watchdog
+    container_name: elkzone-watchdog
+    restart: unless-stopped
+    environment:
+      - CHECK_INTERVAL=60
+      - ALERT_COOLDOWN=300
+      - MAX_FAILURES=3
+      - SERVICE_URL=http://elkzone-backend:3000/api/federation/watchdog
+    volumes:
+      - ./logs:/app/logs
+      - ./cache:/app/cache
+      - ./scripts:/app/scripts
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - elkzone-network
+    depends_on:
+      - elkzone-backend
+    healthcheck:
+      test: ["CMD", "/app/scripts/federation/watchdog-service.sh", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  elkzone-network:
+    external: true

@@ -1,0 +1,19 @@
+# Our security policy and contact information
+Contact: mailto:security@elkzone.example.com
+Contact: https://elkzone.example.com/security
+Expires: 2026-10-17T15:45:25.000Z
+
+# Our security vulnerability disclosure policy
+Policy: https://elkzone.example.com/security-policy
+
+# Our security key for verifying signed security documents
+Canonical: https://elkzone.example.com/.well-known/security.txt
+
+# Preferred languages for security communications
+Preferred-Languages: en, fr, de, es
+
+# OpenPGP key for encrypted communications
+Encryption: https://elkzone.example.com/pgp-key.txt
+
+# HackerOne program (if applicable)
+# Thanks: https://hackerone.com/elkzone.example.com

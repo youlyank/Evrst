@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 ENVIRONMENT=${1:-"production"}
-PROJECT_DIR="/opt/elkzone"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SECRETS_FILE="$PROJECT_DIR/.env.prod"
 
 echo -e "${GREEN}🔐 ELK.Zone 2.0 - Secrets Validation & Security Hardening${NC}"
@@ -59,14 +59,14 @@ validate_jwt_secret() {
 validate_database_url() {
     local url=$1
     
-    # Check if it's a valid PostgreSQL URL
-    if [[ ! "$url" =~ ^postgresql:// ]]; then
-        print_error "DATABASE_URL must be a valid PostgreSQL URL"
+    # Check if it's a valid SQLite or PostgreSQL URL
+    if [[ ! "$url" =~ ^(sqlite:|file:|postgresql://) ]]; then
+        print_error "DATABASE_URL must be a valid SQLite or PostgreSQL URL"
         return 1
     fi
     
-    # Check for test/default values
-    if [[ "$url" =~ (localhost|127\.0\.0\.1|test|dev|example) ]]; then
+    # Check for test/default values (but allow file paths for SQLite)
+    if [[ "$url" =~ (localhost|127\.0\.0\.1|test|dev|example) ]] && [[ ! "$url" =~ ^file: ]]; then
         print_error "DATABASE_URL appears to be a test/local value"
         return 1
     fi
@@ -105,6 +105,11 @@ generate_secure_string() {
 validate_docker_compose() {
     print_status "Validating Docker Compose configuration..."
     
+    if ! command -v docker &> /dev/null; then
+        print_warning "Docker not found, skipping Docker Compose validation"
+        return 0
+    fi
+    
     cd "$PROJECT_DIR"
     
     if docker compose -f docker-compose.prod.yml config > /dev/null 2>&1; then
@@ -131,8 +136,10 @@ check_file_permissions() {
     fi
     
     # Check script permissions
-    find "$PROJECT_DIR/scripts" -name "*.sh" -not -perm -u+x -exec chmod +x {} \;
-    print_success "Script permissions: OK"
+    if [ -d "$PROJECT_DIR/scripts" ]; then
+        find "$PROJECT_DIR/scripts" -name "*.sh" -not -perm -u+x -exec chmod +x {} \; 2>/dev/null || true
+        print_success "Script permissions: OK"
+    fi
 }
 
 # Function to create security audit report

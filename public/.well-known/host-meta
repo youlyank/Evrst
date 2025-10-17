@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
+  <Link rel="lrdd" type="application/xrd+xml" template="https://elkzone.example.com/.well-known/webfinger?resource={uri}"/>
+  <Link rel="http://webfinger.net/rel/profile-page" type="text/html" template="https://elkzone.example.com/@{uri}"/>
+  <Link rel="self" type="application/activity+json" template="https://elkzone.example.com/users/{uri}"/>
+  <Property type="http://mastodon.social/schema/1.0">supported</Property>
+</XRD>

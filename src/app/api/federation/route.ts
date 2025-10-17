@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { ZAI } from 'z-ai-web-dev-sdk'
+
+// Dynamic import for ZAI SDK to handle ES module
+const getZAI = async () => {
+  const ZAI = await import('z-ai-web-dev-sdk')
+  return ZAI.default
+}
 
 // ActivityPub federation endpoints
 export async function POST(request: NextRequest) {
@@ -228,6 +233,7 @@ export async function POST(request: NextRequest) {
     // TODO: Implement actual Fediverse search
     // For now, use ZAI to simulate search results
     try {
+      const ZAI = await getZAI()
       const zai = await ZAI.create()
       
       const searchPrompt = `Search the Fediverse for "${query}" of type "${type || 'all'}". Return realistic results with user profiles, communities, and content. Include federated IDs and instance information.`

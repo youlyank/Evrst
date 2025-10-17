@@ -1,0 +1,37 @@
+FROM alpine:latest
+
+# Install required packages
+RUN apk add --no-cache \
+    bash \
+    curl \
+    jq \
+    net-tools \
+    procps \
+    docker-cli
+
+# Create app directory
+WORKDIR /app
+
+# Copy scripts and configuration
+COPY scripts/ /app/scripts/
+COPY logs/ /app/logs/
+COPY cache/ /app/cache/
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/cache
+
+# Make scripts executable
+RUN chmod +x /app/scripts/federation/watchdog-service.sh
+
+# Set environment variables
+ENV CHECK_INTERVAL=60
+ENV ALERT_COOLDOWN=300
+ENV MAX_FAILURES=3
+ENV SERVICE_URL=http://elkzone-backend:3000/api/federation/watchdog
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD /app/scripts/federation/watchdog-service.sh status
+
+# Run the watchdog service
+CMD ["/app/scripts/federation/watchdog-service.sh", "start"]
