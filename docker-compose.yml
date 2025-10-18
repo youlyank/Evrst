@@ -1,201 +1,62 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  # ELK.Zone Main Application
-  elkzone:
+  # Main Application
+  elk:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=file:./dev.db
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=${NEXTAUTH_URL}
-      - PROMETHEUS_URL=http://prometheus:9090
-      - REDIS_URL=redis://redis:6379
-      - SOCKET_URL=http://socket-server:3001
+    env_file:
+      - .env
     depends_on:
       - redis
-      - prometheus
-      - postgres
+      - db
     volumes:
-      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    restart: unless-stopped
     networks:
-      - elkzone-network
+      - elk-network
 
-  # Socket.IO Server for Real-time Features
-  socket-server:
-    build:
-      context: .
-      dockerfile: Dockerfile.socket
-    ports:
-      - "3001:3001"
-    environment:
-      - NODE_ENV=production
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      - redis
-    networks:
-      - elkzone-network
-
-  # PostgreSQL Database
-  postgres:
+  # Database
+  db:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_DB=elkzone
-      - POSTGRES_USER=elkzone
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${DB_USER:-elk}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-securepassword}
+      POSTGRES_DB: ${DB_NAME:-elkzone}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backups:/backups
     ports:
       - "5432:5432"
+    restart: unless-stopped
     networks:
-      - elkzone-network
+      - elk-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-elk}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Redis for Caching and Sessions
+  # Redis
   redis:
     image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispassword}
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    restart: unless-stopped
     networks:
-      - elkzone-network
-
-  # Prometheus for Monitoring
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
-    networks:
-      - elkzone-network
-
-  # Grafana for Visualization
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3002:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
-      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
-    depends_on:
-      - prometheus
-    networks:
-      - elkzone-network
-
-  # Akkoma (ActivityPub/Mastodon-compatible)
-  akkoma:
-    image: akkoma:latest
-    ports:
-      - "4000:4000"
-    environment:
-      - MIX_ENV=prod
-      - DB_HOST=postgres
-      - DB_USER=elkzone
-      - DB_PASS=${POSTGRES_PASSWORD}
-      - DB_NAME=elkzone
-    depends_on:
-      - postgres
-    volumes:
-      - akkoma_data:/opt/akkoma/uploads
-      - ./config/akkoma:/etc/akkoma
-    networks:
-      - elkzone-network
-
-  # Matrix Synapse Server
-  synapse:
-    image: matrixdotorg/synapse:latest
-    ports:
-      - "8008:8008"
-    environment:
-      - SYNAPSE_SERVER_NAME=matrix.elkzone.com
-      - SYNAPSE_REPORT_STATS=no
-      - POSTGRES_HOST=postgres
-      - POSTGRES_USER=elkzone
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=elkzone
-    depends_on:
-      - postgres
-    volumes:
-      - synapse_data:/data
-      - ./config/synapse:/etc/synapse
-    networks:
-      - elkzone-network
-
-  # PeerTube for Video Streaming
-  peertube:
-    image: chocobozzz/peertube:latest
-    ports:
-      - "9000:9000"
-    environment:
-      - PEERTUBE_DB_HOSTNAME=postgres
-      - PEERTUBE_DB_USERNAME=elkzone
-      - PEERTUBE_DB_PASSWORD=${POSTGRES_PASSWORD}
-      - PEERTUBE_WEBSERVER_HOSTNAME=video.elkzone.com
-      - PEERTUBE_TRUST_PROXY=["127.0.0.1", "172.17.0.0/16"]
-    depends_on:
-      - postgres
-      - redis
-    volumes:
-      - peertube_data:/data
-      - ./config/peertube:/config
-    networks:
-      - elkzone-network
-
-  # Jitsi Meet for Video Calls
-  jitsi:
-    image: jitsi/web:latest
-    ports:
-      - "8080:80"
-    environment:
-      - JITSI_PROSODY_DOMAIN=meet.elkzone.com
-      - JITSI_PUBLIC_URL=https://meet.elkzone.com
-    depends_on:
-      - jitsi-prosody
-    networks:
-      - elkzone-network
-
-  jitsi-prosody:
-    image: jitsi/prosody:latest
-    environment:
-      - JITSI_PROSODY_DOMAIN=meet.elkzone.com
-    networks:
-      - elkzone-network
-
-  jitsi-jicofo:
-    image: jitsi/jicofo:latest
-    environment:
-      - JITSI_PROSODY_DOMAIN=meet.elkzone.com
-    depends_on:
-      - jitsi-prosody
-    networks:
-      - elkzone-network
-
-  jitsi-jvb:
-    image: jitsi/jvb:latest
-    environment:
-      - JITSI_PROSODY_DOMAIN=meet.elkzone.com
-      - DOCKER_HOST_ADDRESS=127.0.0.1
-    depends_on:
-      - jitsi-prosody
-    networks:
-      - elkzone-network
+      - elk-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Nginx Reverse Proxy
   nginx:
@@ -204,28 +65,137 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./config/nginx/ssl:/etc/nginx/ssl
-      - ./logs/nginx:/var/log/nginx
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./uploads:/var/www/uploads
     depends_on:
-      - elkzone
-      - akkoma
-      - synapse
-      - peertube
-      - jitsi
-      - grafana
+      - elk
+    restart: unless-stopped
     networks:
-      - elkzone-network
+      - elk-network
+
+  # BullMQ Dashboard (Optional)
+  bullmq-dashboard:
+    image: ghcr.io/featbit/bullmq-dashboard:latest
+    ports:
+      - "5556:5556"
+    environment:
+      BULLMQ_DASHBOARD_REDIS_HOST: redis
+      BULLMQ_DASHBOARD_REDIS_PORT: 6379
+      BULLMQ_DASHBOARD_REDIS_PASSWORD: ${REDIS_PASSWORD:-redispassword}
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - elk-network
+    profiles:
+      - monitoring
+
+  # Prisma Studio (Development Only)
+  prisma-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: npx prisma studio --hostname 0.0.0.0 --port 5555
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - elk-network
+    profiles:
+      - development
+
+  # Redis Commander (Redis Management)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: "local:redis:6379:0:${REDIS_PASSWORD:-redispassword}"
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - elk-network
+    profiles:
+      - monitoring
+
+  # Grafana (Monitoring)
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - elk-network
+    profiles:
+      - monitoring
+
+  # Prometheus (Metrics Collection)
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - elk-network
+    profiles:
+      - monitoring
+
+  # Node Exporter (System Metrics)
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    networks:
+      - elk-network
+    profiles:
+      - monitoring
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
-  prometheus_data:
+    driver: local
   grafana_data:
-  akkoma_data:
-  synapse_data:
-  peertube_data:
+    driver: local
+  prometheus_data:
+    driver: local
 
 networks:
-  elkzone-network:
+  elk-network:
     driver: bridge

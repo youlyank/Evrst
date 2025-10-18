@@ -10,70 +10,67 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { AuthModal } from '@/components/auth-modal'
-import { 
-  Heart, 
-  MessageCircle, 
-  Share2, 
-  Bookmark, 
-  TrendingUp, 
-  Users, 
-  MessageSquare, 
-  Bell, 
-  Search, 
-  Plus, 
-  Home, 
-  Compass, 
-  User, 
-  Settings, 
-  BarChart3, 
-  Rocket, 
-  Zap,
-  Repeat,
-  AtSign,
-  Hash,
-  Link2,
-  Image,
-  Video,
-  Mic,
-  Phone,
-  Radio,
-  Globe,
-  Shield,
-  Activity,
-  Eye,
-  MoreHorizontal,
-  Reply,
-  Repeat,
-  Quote,
-  ThumbsUp,
-  ThumbsDown,
-  Star,
-  Flag,
-  Volume2,
-  Wifi,
-  LogIn,
-  Menu,
-  Send,
-  Paperclip,
-  Smile,
-  Play,
-  Pause,
-  Edit,
-  Camera,
-  Clock,
-  Circle,
-  UserPlus,
-  UserMinus,
-  Ban,
-  Crown,
-  Calendar,
-  MapPin,
-  Users2,
-  Lock,
-  Unlock,
-  VolumeX,
-  WifiOff
-} from 'lucide-react'
+import Heart from 'lucide-react/dist/esm/icons/heart'
+import MessageCircle from 'lucide-react/dist/esm/icons/message-circle'
+import Share2 from 'lucide-react/dist/esm/icons/share-2'
+import Bookmark from 'lucide-react/dist/esm/icons/bookmark'
+import TrendingUp from 'lucide-react/dist/esm/icons/trending-up'
+import Users from 'lucide-react/dist/esm/icons/users'
+import MessageSquare from 'lucide-react/dist/esm/icons/message-square'
+import Bell from 'lucide-react/dist/esm/icons/bell'
+import Search from 'lucide-react/dist/esm/icons/search'
+import Plus from 'lucide-react/dist/esm/icons/plus'
+import Home from 'lucide-react/dist/esm/icons/home'
+import Compass from 'lucide-react/dist/esm/icons/compass'
+import User from 'lucide-react/dist/esm/icons/user'
+import Settings from 'lucide-react/dist/esm/icons/settings'
+import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3'
+import Rocket from 'lucide-react/dist/esm/icons/rocket'
+import Zap from 'lucide-react/dist/esm/icons/zap'
+import Repeat from 'lucide-react/dist/esm/icons/repeat'
+import AtSign from 'lucide-react/dist/esm/icons/at-sign'
+import Hash from 'lucide-react/dist/esm/icons/hash'
+import Link2 from 'lucide-react/dist/esm/icons/link-2'
+import Image from 'lucide-react/dist/esm/icons/image'
+import Video from 'lucide-react/dist/esm/icons/video'
+import Mic from 'lucide-react/dist/esm/icons/mic'
+import Phone from 'lucide-react/dist/esm/icons/phone'
+import Radio from 'lucide-react/dist/esm/icons/radio'
+import Globe from 'lucide-react/dist/esm/icons/globe'
+import Shield from 'lucide-react/dist/esm/icons/shield'
+import Activity from 'lucide-react/dist/esm/icons/activity'
+import Eye from 'lucide-react/dist/esm/icons/eye'
+import MoreHorizontal from 'lucide-react/dist/esm/icons/more-horizontal'
+import Reply from 'lucide-react/dist/esm/icons/reply'
+import Quote from 'lucide-react/dist/esm/icons/quote'
+import ThumbsUp from 'lucide-react/dist/esm/icons/thumbs-up'
+import ThumbsDown from 'lucide-react/dist/esm/icons/thumbs-down'
+import Star from 'lucide-react/dist/esm/icons/star'
+import Flag from 'lucide-react/dist/esm/icons/flag'
+import Volume2 from 'lucide-react/dist/esm/icons/volume-2'
+import Wifi from 'lucide-react/dist/esm/icons/wifi'
+import LogIn from 'lucide-react/dist/esm/icons/log-in'
+import Menu from 'lucide-react/dist/esm/icons/menu'
+import Send from 'lucide-react/dist/esm/icons/send'
+import Paperclip from 'lucide-react/dist/esm/icons/paperclip'
+import Smile from 'lucide-react/dist/esm/icons/smile'
+import Play from 'lucide-react/dist/esm/icons/play'
+import Pause from 'lucide-react/dist/esm/icons/pause'
+import Edit from 'lucide-react/dist/esm/icons/edit'
+import Camera from 'lucide-react/dist/esm/icons/camera'
+import Clock from 'lucide-react/dist/esm/icons/clock'
+import Circle from 'lucide-react/dist/esm/icons/circle'
+import UserPlus from 'lucide-react/dist/esm/icons/user-plus'
+import UserMinus from 'lucide-react/dist/esm/icons/user-minus'
+import Ban from 'lucide-react/dist/esm/icons/ban'
+import Crown from 'lucide-react/dist/esm/icons/crown'
+import Calendar from 'lucide-react/dist/esm/icons/calendar'
+import MapPin from 'lucide-react/dist/esm/icons/map-pin'
+import Users2 from 'lucide-react/dist/esm/icons/users-2'
+import Lock from 'lucide-react/dist/esm/icons/lock'
+import Unlock from 'lucide-react/dist/esm/icons/unlock'
+import VolumeX from 'lucide-react/dist/esm/icons/volume-x'
+import WifiOff from 'lucide-react/dist/esm/icons/wifi-off'
 
 // Import Swiper for stories
 import { Swiper, SwiperSlide } from 'swiper/react'

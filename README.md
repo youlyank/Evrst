@@ -1,234 +1,567 @@
 # ELK.Zone 2.0 - Federated Social Media Platform
 
-A next-generation federated social media platform combining the best features of ActivityPub (Akkoma), Matrix, Reddit-style communities, Threads/Twitter feed, Instagram Stories, and live streaming.
+A comprehensive, production-ready federated social media platform built with Next.js 15, TypeScript, and modern web technologies. ELK.Zone 2.0 combines the best features of Twitter, Reddit, Instagram Stories, and live streaming into a unified federated experience.
 
 ## 🚀 Features
 
 ### Core Social Features
-- **🏠 Unified Feed**: Real-time federated feed combining posts from followed users and communities
-- **🧑‍🤝‍🧑 Communities**: Reddit-style communities with voting, moderation, and role management
-- **📸 Stories**: 24-hour expiring posts with reactions and view tracking
-- **🎙️ Live Streaming**: Integrated PeerTube streaming with real-time chat
-- **💬 Real-time Chat**: Matrix-based messaging with federation support
+- **Real-time Feed** - WebSocket-powered live updates
+- **Thread System** - Twitter-like posts with voting, comments, and sharing
+- **Communities** - Reddit-style topic-based communities
+- **Stories** - Instagram-style ephemeral content with reactions
+- **Live Streaming** - Integrated live video streaming
+- **Federation** - ActivityPub support for cross-platform communication
 
-### Federation & Governance
-- **🌐 ActivityPub**: Full federation with Mastodon, Pixelfed, and other ActivityPub platforms
-- **🔐 Matrix Integration**: Decentralized chat and video calls
-- **⚖️ Governance**: Automated policy evaluation and federation management
-- **📊 Monitoring**: Prometheus metrics and Grafana dashboards
+### Technical Features
+- **Real-time Communication** - Socket.IO for instant updates
+- **Queue System** - BullMQ with Redis for background jobs
+- **Database** - Prisma ORM with SQLite
+- **Authentication** - JWT-based auth system
+- **Media Processing** - AI-powered content analysis
+- **Responsive Design** - Mobile-first with Tailwind CSS
+- **Component Library** - shadcn/ui components
 
-### Advanced Features
-- **🔄 Real-time Updates**: WebSocket-based live updates
-- **📱 Mobile Responsive**: Optimized for all devices
-- **🎨 Modern UI**: Built with shadcn/ui and Tailwind CSS
-- **⚡ High Performance**: Caching with Redis and optimized database queries
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   ELK.Zone      │    │   Akkoma        │    │   Matrix        │
-│   (Next.js)     │◄──►│   (ActivityPub) │◄──►│   (Chat)        │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   PeerTube      │    │   Jitsi         │    │   PostgreSQL    │
-│   (Video)       │    │   (Calls)       │    │   (Database)    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Redis         │    │   Prometheus    │    │   Grafana       │
-│   (Cache)       │    │   (Metrics)     │    │   (Monitoring)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-## 🛠️ Tech Stack
+## 🛠️ Technology Stack
 
 ### Frontend
-- **Next.js 15** with App Router
-- **TypeScript 5** for type safety
-- **Tailwind CSS 4** for styling
-- **shadcn/ui** component library
-- **Socket.IO Client** for real-time updates
-- **Swiper.js** for story carousels
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript 5
+- **Styling**: Tailwind CSS 4
+- **UI Components**: shadcn/ui (New York style)
+- **Icons**: Lucide React
+- **State Management**: Zustand + TanStack Query
+- **Real-time**: Socket.IO Client
+- **Carousels**: Swiper.js
 
 ### Backend
-- **Next.js API Routes** for REST API
-- **Socket.IO** for WebSocket connections
-- **Prisma ORM** with PostgreSQL
-- **Redis** for caching and sessions
-- **Z.AI SDK** for AI features
+- **Runtime**: Node.js with TypeScript
+- **Database**: Prisma ORM + SQLite
+- **Caching**: Redis
+- **Queue System**: BullMQ
+- **Real-time**: Socket.IO Server
+- **Authentication**: JWT + bcrypt
+- **AI Integration**: Z.AI Web Dev SDK
+- **File Uploads**: Multer + Sharp
 
 ### Infrastructure
-- **Docker & Docker Compose** for containerization
-- **Nginx** as reverse proxy
-- **Prometheus** for metrics collection
-- **Grafana** for visualization
-- **Akkoma** for ActivityPub federation
-- **Matrix Synapse** for chat
-- **PeerTube** for video streaming
-- **Jitsi** for video calls
+- **Development**: Nodemon + TSX
+- **Code Quality**: ESLint + Prettier
+- **Containerization**: Docker ready
+- **Monitoring**: Health checks + logging
+
+## 📋 Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** (v18.0.0 or higher)
+- **npm** (v9.0.0 or higher) or **yarn** (v1.22.0 or higher)
+- **Redis** (v7.0 or higher) - for queue system and caching
+- **Git** - for version control
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Docker and Docker Compose
-- Node.js 18+ (for local development)
-- PostgreSQL (if not using Docker)
+### 1. Clone the Repository
 
-### 1. Clone and Setup
 ```bash
-git clone https://github.com/elkzone/elkzone.git
-cd elkzone
-cp .env.example .env
-# Edit .env with your configuration
+git clone https://github.com/youlyank/Evrst.git
+cd Evrst
 ```
 
-### 2. Start with Docker
+### 2. Install Dependencies
+
 ```bash
-# Start all services
-docker-compose up -d
-
-# Check status
-docker-compose ps
-
-# View logs
-docker-compose logs -f elkzone
-```
-
-### 3. Local Development
-```bash
-# Install dependencies
 npm install
+```
 
-# Setup database
+### 3. Environment Setup
+
+Create a `.env` file in the root directory:
+
+```env
+# Database
+DATABASE_URL="file:./dev.db"
+
+# Redis
+REDIS_URL="redis://localhost:6379"
+
+# JWT Secret
+JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
+
+# Next.js
+NEXTAUTH_SECRET="your-nextauth-secret"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Socket.IO
+NEXT_PUBLIC_SOCKET_URL="http://localhost:3000"
+
+# AI SDK (Optional - for content analysis)
+ZAI_API_KEY="your-zai-api-key"
+
+# File Upload
+UPLOAD_DIR="./uploads"
+MAX_FILE_SIZE="10485760" # 10MB
+
+# Development
+NODE_ENV="development"
+```
+
+### 4. Database Setup
+
+```bash
+# Generate Prisma client
+npx prisma generate
+
+# Push database schema
 npm run db:push
 
-# Start development server
-npm run dev
-
-# Start socket server (in another terminal)
-npm run socket:dev
+# (Optional) View database in Prisma Studio
+npx prisma studio
 ```
 
-## 🌐 Access Points
+### 5. Start Redis Server
 
-Once deployed, you can access different services at:
-
-- **Main App**: https://elkzone.com
-- **Social Feed**: https://social.elkzone.com (Akkoma)
-- **Chat**: https://chat.elkzone.com (Matrix)
-- **Video**: https://video.elkzone.com (PeerTube)
-- **Calls**: https://meet.elkzone.com (Jitsi)
-- **Monitoring**: https://monitor.elkzone.com (Grafana)
-
-## 📊 Monitoring
-
-### Prometheus Metrics
-Available at `http://localhost:9090` (or your monitoring domain)
-
-Key metrics:
-- `elkzone_active_users_total`
-- `elkzone_posts_total`
-- `elkzone_live_streams_active`
-- `federation_handshake_total`
-- `governance_policy_evaluations_total`
-
-### Grafana Dashboards
-Access at `https://monitor.elkzone.com` with credentials from `.env`
-
-Pre-configured dashboards:
-- **Overview**: System health and key metrics
-- **Federation**: Cross-instance communication
-- **Performance**: Response times and error rates
-- **Social**: User engagement and content metrics
-
-## 🔧 Configuration
-
-### Environment Variables
-Key configuration options in `.env`:
+Make sure Redis is running on your system:
 
 ```bash
-# Application
-NEXTAUTH_URL=https://elkzone.com
-NEXTAUTH_SECRET=your-secret-here
+# On macOS with Homebrew
+brew services start redis
 
-# Database
-DATABASE_URL=postgresql://user:pass@host:5432/dbname
+# On Ubuntu/Debian
+sudo systemctl start redis-server
 
-# Federation
-ACTIVITYPUB_HOST=elkzone.com
-MATRIX_SERVER_NAME=matrix.elkzone.com
+# On Windows (using WSL)
+sudo service redis-server start
 
-# Real-time
-SOCKET_URL=http://socket-server:3001
-REDIS_URL=redis://redis:6379
+# Or run Redis directly
+redis-server
 ```
 
-### Database Schema
-The application uses Prisma with PostgreSQL. Key models:
+### 6. Start Development Server
 
-- **User**: Unified user identity across platforms
-- **Thread**: Posts and content
-- **Community**: Reddit-style communities
-- **Story**: 24-hour expiring content
-- **LiveStream**: Video streaming sessions
-- **Message**: Chat messages
+```bash
+npm run dev
+```
+
+The application will be available at:
+- **Frontend**: http://localhost:3000
+- **API**: http://localhost:3000/api
+- **Socket.IO**: ws://localhost:3000/api/socketio
+
+## 📁 Project Structure
+
+```
+Evrst/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── api/               # API Routes
+│   │   │   ├── auth/          # Authentication endpoints
+│   │   │   ├── posts/         # Post management
+│   │   │   ├── communities/   # Community management
+│   │   │   ├── stories/       # Story management
+│   │   │   ├── live-streams/  # Live streaming
+│   │   │   └── socketio/      # Socket.IO server
+│   │   ├── globals.css        # Global styles
+│   │   ├── layout.tsx         # Root layout
+│   │   └── page.tsx           # Home page
+│   ├── components/            # React components
+│   │   ├── ui/               # shadcn/ui components
+│   │   └── auth-modal.tsx    # Authentication modal
+│   ├── lib/                  # Utility libraries
+│   │   ├── db.ts            # Database client
+│   │   ├── auth.ts          # Authentication utilities
+│   │   ├── queue.ts         # Queue configuration
+│   │   └── socket.ts        # Socket.IO configuration
+│   └── types/               # TypeScript type definitions
+├── prisma/
+│   ├── schema.prisma        # Database schema
+│   └── migrations/          # Database migrations
+├── uploads/                 # File upload directory
+├── server.ts               # Custom server setup
+├── next.config.js          # Next.js configuration
+├── tailwind.config.js      # Tailwind CSS configuration
+├── tsconfig.json          # TypeScript configuration
+├── package.json           # Dependencies and scripts
+└── README.md             # This file
+```
+
+## 🗄️ Database Schema
+
+The application uses the following main models:
+
+### User
+- Authentication and profile management
+- Karma system for reputation
+- Verification status
+
+### Post
+- Thread-style posts with content
+- Voting system (upvotes/downvotes)
+- Media attachments
+- Hashtag support
+
+### Community
+- Topic-based communities
+- Member management
+- Post aggregation
+
+### Story
+- Ephemeral content (24 hours)
+- Image/video support
+- Reaction system
+
+### LiveStream
+- Real-time video streaming
+- Viewer counts
+- Category management
+
+## 🔧 Available Scripts
+
+```bash
+# Development
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+
+# Database
+npm run db:push      # Push schema to database
+npm run db:studio    # Open Prisma Studio
+npm run db:generate  # Generate Prisma client
+
+# Code Quality
+npm run lint         # Run ESLint
+npm run lint:fix     # Fix ESLint issues
+npm run type-check   # Run TypeScript checks
+
+# Queue Management
+npm run queue:worker # Start queue worker
+npm run queue:ui     # Open BullMQ dashboard (if configured)
+```
+
+## 🔐 Authentication
+
+The application uses JWT-based authentication:
+
+1. **Login**: Users authenticate with username/password
+2. **Token Generation**: JWT tokens are generated upon successful login
+3. **Token Storage**: Tokens are stored in localStorage
+4. **API Protection**: All API endpoints require valid JWT tokens
+5. **Socket Authentication**: WebSocket connections are authenticated via tokens
+
+### Authentication Flow
+
+```typescript
+// Login
+POST /api/auth/login
+{
+  "username": "user",
+  "password": "password"
+}
+
+// Response
+{
+  "token": "jwt-token",
+  "user": { ... }
+}
+
+// Protected API call
+GET /api/posts
+Authorization: Bearer jwt-token
+```
+
+## 🔄 Real-time Features
+
+### Socket.IO Events
+
+#### Client → Server
+- `join_feed` - Join the main feed
+- `join_community` - Join a specific community
+- `leave_community` - Leave a community
+
+#### Server → Client
+- `new_post` - New post in feed
+- `new_comment` - New comment on post
+- `new_like` - New like on post
+- `new_story` - New story available
+- `stream_start` - Live stream started
+- `stream_end` - Live stream ended
+- `user_status_update` - User online/offline status
+
+### Queue System
+
+The application uses BullMQ for background processing:
+
+- **Post Processing**: Content analysis and hashtag extraction
+- **Notifications**: Email and push notifications
+- **Media Processing**: Image optimization and thumbnail generation
+- **Federation**: ActivityPub message delivery
+- **Cleanup**: Expired content removal
+
+## 🎨 UI Components
+
+The application uses shadcn/ui components with custom theming:
+
+### Available Components
+- Button, Card, Input, Textarea
+- Avatar, Badge, Tabs
+- Dialog, Dropdown, Sheet
+- Form, Label, Select
+- Toast, Alert, Skeleton
+
+### Custom Components
+- `AuthModal` - Authentication modal
+- `PostCard` - Post display component
+- `StoryViewer` - Story viewing component
+- `LiveStreamCard` - Live stream component
 
 ## 🚀 Deployment
 
-### Production Deployment
-```bash
-# Build and deploy
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+### Docker Deployment
 
-# Run database migrations
-docker-compose exec elkzone npm run db:deploy
+```dockerfile
+# Dockerfile example
+FROM node:18-alpine
 
-# Setup SSL certificates
-./scripts/setup-ssl.sh
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+RUN npm run build
+
+EXPOSE 3000
+CMD ["npm", "start"]
 ```
 
-### Scaling
-- **Horizontal Scaling**: Add more ELK.Zone instances behind load balancer
-- **Database**: Use PostgreSQL clustering for high availability
-- **Cache**: Scale Redis with clustering
-- **CDN**: Use CloudFlare for static assets
+### Docker Compose
+
+```yaml
+version: "3.8"
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file: .env
+    depends_on:
+      - redis
+      - db
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: elkzone
+      POSTGRES_USER: elk
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+```
+
+### Environment Variables for Production
+
+```env
+NODE_ENV="production"
+DATABASE_URL="postgresql://user:password@localhost:5432/elkzone"
+REDIS_URL="redis://localhost:6379"
+JWT_SECRET="your-production-jwt-secret"
+NEXTAUTH_SECRET="your-production-nextauth-secret"
+NEXTAUTH_URL="https://yourdomain.com"
+```
+
+## 🔧 Configuration
+
+### Next.js Configuration
+
+The application uses custom Next.js configuration for:
+- Image optimization
+- Custom server setup
+- Socket.IO integration
+- Environment variable handling
+
+### Tailwind Configuration
+
+Custom Tailwind setup with:
+- shadcn/ui design system
+- Custom color palette
+- Responsive breakpoints
+- Animation utilities
+
+## 🧪 Testing
+
+While this project doesn't include tests in the current version, here's the recommended testing setup:
+
+```bash
+# Install testing dependencies
+npm install --save-dev jest @testing-library/react @testing-library/jest-dom
+
+# Run tests
+npm test
+```
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Workflow
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 API Documentation
+
+### Posts API
+
+```bash
+# Get all posts
+GET /api/posts
+
+# Create new post
+POST /api/posts
+{
+  "content": "Post content",
+  "type": "TEXT"
+}
+
+# Vote on post
+POST /api/posts/:id/vote
+{
+  "type": "UPVOTE" | "DOWNVOTE"
+}
+```
+
+### Communities API
+
+```bash
+# Get all communities
+GET /api/communities
+
+# Join community
+POST /api/communities/:id/join
+```
+
+### Stories API
+
+```bash
+# Get active stories
+GET /api/stories/active
+
+# View story
+POST /api/stories/:id/view
+
+# React to story
+POST /api/stories/:id/react
+{
+  "emoji": "❤️"
+}
+```
+
+## 🔍 Monitoring & Debugging
+
+### Health Checks
+
+```bash
+# Check application health
+GET /api/health
+
+# Check database connection
+GET /api/health/db
+
+# Check Redis connection
+GET /api/health/redis
+```
+
+### Logging
+
+The application uses structured logging:
+- Development: Console output
+- Production: File-based logging (recommended)
+
+### Performance Monitoring
+
+Consider integrating:
+- **APM**: New Relic, DataDog
+- **Error Tracking**: Sentry
+- **Analytics**: Google Analytics, Plausible
+
+## 🛡️ Security Considerations
+
+- **JWT Tokens**: Use strong secrets and implement rotation
+- **Input Validation**: Validate all user inputs
+- **Rate Limiting**: Implement API rate limiting
+- **CORS**: Configure proper CORS policies
+- **HTTPS**: Use HTTPS in production
+- **Environment Variables**: Never commit secrets to git
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+1. **Redis Connection Failed**
+   ```bash
+   # Check Redis status
+   redis-cli ping
+   
+   # Start Redis
+   redis-server
+   ```
+
+2. **Database Connection Issues**
+   ```bash
+   # Reset database
+   npm run db:push -- --force-reset
+   
+   # Check Prisma schema
+   npx prisma validate
+   ```
+
+3. **Port Already in Use**
+   ```bash
+   # Find process using port 3000
+   lsof -i :3000
+   
+   # Kill process
+   kill -9 <PID>
+   ```
+
+4. **Build Errors**
+   ```bash
+   # Clear Next.js cache
+   rm -rf .next
+   
+   # Clear node modules
+   rm -rf node_modules package-lock.json
+   npm install
+   ```
 
 ## 📄 License
 
-This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- **ActivityPub** for federation protocol
-- **Akkoma** for ActivityPub implementation
-- **Matrix** for decentralized chat
-- **PeerTube** for video streaming
-- **Jitsi** for video calls
-- **Next.js** for the framework
-- **shadcn/ui** for UI components
+- **Next.js Team** - For the amazing framework
+- **Prisma Team** - For the excellent ORM
+- **shadcn/ui** - For the beautiful component library
+- **Socket.IO Team** - For real-time communication
+- **BullMQ Team** - For the robust queue system
 
 ## 📞 Support
 
-- **Documentation**: https://docs.elkzone.com
-- **Community**: https://community.elkzone.com
-- **Issues**: https://github.com/elkzone/elkzone/issues
-- **Matrix Chat**: #elkzone:matrix.elkzone.com
+If you encounter any issues or have questions:
+
+1. Check the [Troubleshooting](#-troubleshooting) section
+2. Search existing [GitHub Issues](https://github.com/youlyank/Evrst/issues)
+3. Create a new issue with detailed information
+4. Join our community discussions
 
 ---
 
-🦌 **ELK.Zone 2.0** - Building the future of federated social media
+**Built with ❤️ from Ankur**
+
+*ELK.Zone 2.0 - The future of federated social media*
