@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Dependencies
 node_modules
 npm-debug.log*
@@ -236,3 +237,18 @@ ssl/
 # Monitoring
 monitoring/
 nginx/
+=======
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.next
+.git
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+test
+*.log
+local-*
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef

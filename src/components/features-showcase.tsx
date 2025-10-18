@@ -127,12 +127,20 @@ import {
   CloudLightning,
   Sun,
   Moon,
+<<<<<<< HEAD
+=======
+  Cloud,
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
   Cloudy,
   Wind,
   Thermometer,
   Droplets,
   Gauge,
   Timer,
+<<<<<<< HEAD
+=======
+  Stopwatch,
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
   TimerReset,
   TimerOff,
   AlarmClock,

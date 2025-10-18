@@ -48,8 +48,13 @@ export async function GET(request: NextRequest) {
             { isDeleted: false },
             {
               OR: [
+<<<<<<< HEAD
                 { content: { contains: searchTerm } },
                 { hashtags: { some: { hashtag: { contains: searchTerm } } } }
+=======
+                { content: { contains: searchTerm, mode: 'insensitive' } },
+                { hashtags: { some: { hashtag: { contains: searchTerm, mode: 'insensitive' } } } }
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
               ]
             }
           ]
@@ -99,8 +104,13 @@ export async function GET(request: NextRequest) {
             { isDeleted: false },
             {
               OR: [
+<<<<<<< HEAD
                 { content: { contains: searchTerm } },
                 { hashtags: { some: { hashtag: { contains: searchTerm } } } }
+=======
+                { content: { contains: searchTerm, mode: 'insensitive' } },
+                { hashtags: { some: { hashtag: { contains: searchTerm, mode: 'insensitive' } } } }
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
               ]
             }
           ]
@@ -122,9 +132,15 @@ export async function GET(request: NextRequest) {
             { isActive: true },
             {
               OR: [
+<<<<<<< HEAD
                 { username: { contains: searchTerm } },
                 { displayName: { contains: searchTerm } },
                 { bio: { contains: searchTerm } }
+=======
+                { username: { contains: searchTerm, mode: 'insensitive' } },
+                { displayName: { contains: searchTerm, mode: 'insensitive' } },
+                { bio: { contains: searchTerm, mode: 'insensitive' } }
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
               ]
             }
           ]
@@ -161,9 +177,15 @@ export async function GET(request: NextRequest) {
             { isActive: true },
             {
               OR: [
+<<<<<<< HEAD
                 { username: { contains: searchTerm } },
                 { displayName: { contains: searchTerm } },
                 { bio: { contains: searchTerm } }
+=======
+                { username: { contains: searchTerm, mode: 'insensitive' } },
+                { displayName: { contains: searchTerm, mode: 'insensitive' } },
+                { bio: { contains: searchTerm, mode: 'insensitive' } }
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
               ]
             }
           ]
@@ -182,9 +204,15 @@ export async function GET(request: NextRequest) {
       const communities = await db.community.findMany({
         where: {
           OR: [
+<<<<<<< HEAD
             { name: { contains: searchTerm } },
             { displayName: { contains: searchTerm } },
             { description: { contains: searchTerm } }
+=======
+            { name: { contains: searchTerm, mode: 'insensitive' } },
+            { displayName: { contains: searchTerm, mode: 'insensitive' } },
+            { description: { contains: searchTerm, mode: 'insensitive' } }
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
           ]
         },
         include: {
@@ -199,7 +227,12 @@ export async function GET(request: NextRequest) {
           _count: {
             select: {
               members: true,
+<<<<<<< HEAD
               posts: true
+=======
+              posts: true,
+              subscribers: true
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
             }
           }
         },
@@ -214,9 +247,15 @@ export async function GET(request: NextRequest) {
       const totalCommunities = await db.community.count({
         where: {
           OR: [
+<<<<<<< HEAD
             { name: { contains: searchTerm } },
             { displayName: { contains: searchTerm } },
             { description: { contains: searchTerm } }
+=======
+            { name: { contains: searchTerm, mode: 'insensitive' } },
+            { displayName: { contains: searchTerm, mode: 'insensitive' } },
+            { description: { contains: searchTerm, mode: 'insensitive' } }
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
           ]
         }
       })

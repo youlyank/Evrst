@@ -1,13 +1,22 @@
+<<<<<<< HEAD
 version: "3.8"
 
 services:
   # Main Application
   elk:
+=======
+version: '3.8'
+
+services:
+  # Next.js Application
+  app:
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+<<<<<<< HEAD
     env_file:
       - .env
     depends_on:
@@ -45,11 +54,43 @@ services:
   redis:
     image: redis:7-alpine
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispassword}
+=======
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@db:5432/elkzone
+      - JWT_SECRET=${JWT_SECRET}
+      - MATRIX_URL=${MATRIX_URL}
+      - PEERTUBE_URL=${PEERTUBE_URL}
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=elkzone
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
+<<<<<<< HEAD
     networks:
       - elk-network
     healthcheck:
@@ -57,6 +98,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+=======
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
 
   # Nginx Reverse Proxy
   nginx:
@@ -65,6 +108,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+<<<<<<< HEAD
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/ssl:/etc/nginx/ssl
       - ./uploads:/var/www/uploads
@@ -199,3 +243,14 @@ volumes:
 networks:
   elk-network:
     driver: bridge
+=======
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef

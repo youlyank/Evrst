@@ -3,16 +3,23 @@ FROM node:18-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
+<<<<<<< HEAD
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+=======
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
+<<<<<<< HEAD
 RUN \
   if [ -f package-lock.json ]; then npm ci --only=production; \
   else echo "Lockfile not found." && exit 1; \
   fi
+=======
+RUN npm ci --only=production
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -32,7 +39,10 @@ WORKDIR /app
 
 ENV NODE_ENV production
 
+<<<<<<< HEAD
 # Create non-root user
+=======
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
@@ -47,6 +57,7 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+<<<<<<< HEAD
 # Copy Prisma files
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
@@ -63,6 +74,14 @@ RUN apk add --no-cache \
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3000/api/health || exit 1
+=======
+# Copy Prisma schema and generate client
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Create uploads directory
+RUN mkdir -p uploads && chown nextjs:nodejs uploads
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
 
 USER nextjs
 
@@ -71,5 +90,8 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
+<<<<<<< HEAD
 # Start the application
+=======
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
 CMD ["node", "server.js"]

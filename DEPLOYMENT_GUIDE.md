@@ -75,10 +75,41 @@ git clone https://github.com/your-org/elkzone-2.0.git
 cd elkzone-2.0
 ```
 
+<<<<<<< HEAD
 ### Step 3: Configure Environment
 
 ```bash
 # Copy environment template
+=======
+### Step 3: Secrets Generation & Validation
+
+**🔐 IMPORTANT: Security First - Generate Fresh Secrets**
+
+ELK.Zone 2.0 includes automated security tools to ensure production-ready secrets:
+
+```bash
+# 1. Generate all production secrets
+./scripts/security/generate-secrets-simple.sh
+
+# 2. Validate the generated secrets
+./scripts/security/validate-secrets.sh production
+
+# 3. Review the generated .env.prod file
+ls -la .env.prod  # Should show 600 permissions
+```
+
+**What gets generated:**
+- JWT Secret (64 characters) - For authentication tokens
+- Session Secret (64 characters) - For session management  
+- Encryption Key (32 characters) - For sensitive data encryption
+- Redis Password (32 characters) - For Redis authentication
+- ActivityPub Key Pair (4096-bit RSA) - For federation security
+- Grafana Password (24 characters) - For monitoring access
+
+**Manual Configuration (if needed):**
+```bash
+# Or copy template and configure manually
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
 cp .env.prod.example .env.prod
 
 # Edit with your values
@@ -87,6 +118,7 @@ nano .env.prod
 
 **Required `.env.prod` values:**
 ```bash
+<<<<<<< HEAD
 DATABASE_URL=postgresql://elk:your_secure_password@postgres:5432/elkzone
 REDIS_URL=redis://redis:6379
 JWT_SECRET=your_super_secret_jwt_key_at_least_32_characters
@@ -94,6 +126,31 @@ POSTGRES_PASSWORD=your_secure_pg_password
 REDIS_PASSWORD=your_secure_redis_password
 NEXT_PUBLIC_API_URL=https://elk.zone/api
 NEXT_PUBLIC_APP_URL=https://elk.zone
+=======
+# Security (auto-generated)
+JWT_SECRET=your_super_secret_jwt_key_64_characters
+SESSION_SECRET=your_super_secret_session_key_64_characters
+ENCRYPTION_KEY=your_encryption_key_32_characters
+
+# Database
+DATABASE_URL="file:./db/elkzone.db"  # SQLite for production
+
+# Redis
+REDIS_URL=redis://redis:6379
+REDIS_PASSWORD=your_secure_redis_password
+
+# Federation
+ACTIVITYPUB_PRIVATE_KEY='-----BEGIN PRIVATE KEY-----...'
+ACTIVITYPUB_PUBLIC_KEY='-----BEGIN PUBLIC KEY-----...'
+FEDERATION_DOMAIN=elkzone.example.com
+
+# Application URLs
+NEXT_PUBLIC_API_URL=https://api.elkzone.example.com
+NEXT_PUBLIC_APP_URL=https://elkzone.example.com
+
+# Monitoring
+GRAFANA_ADMIN_PASSWORD=your_grafana_password
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
 ```
 
 ### Step 4: Deploy Application
@@ -176,12 +233,35 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
   --create-namespace
 ```
 
+<<<<<<< HEAD
 ### Step 3: Configure Secrets
+=======
+### Step 3: Secrets Generation & Configuration
+
+**🔐 Generate Production Secrets**
+
+```bash
+# 1. Generate all production secrets
+./scripts/security/generate-keys.sh
+
+# Choose option 8 for "All secrets (both formats)"
+
+# 2. This creates:
+# - .env.prod.generated (for Docker Compose)
+# - k8s/secrets.generated.yaml (for Kubernetes)
+
+# 3. Validate generated secrets
+./scripts/security/validate-secrets.sh production
+```
+
+**Apply Kubernetes Secrets:**
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
 
 ```bash
 # Create namespace
 kubectl apply -f k8s/namespace.yaml
 
+<<<<<<< HEAD
 # Create secrets (replace with your encoded values)
 kubectl create secret generic elkzone-secrets \
   --from-literal=DATABASE_URL=$(echo -n "postgresql://..." | base64) \
@@ -190,6 +270,30 @@ kubectl create secret generic elkzone-secrets \
   -n elkzone-prod
 ```
 
+=======
+# Apply generated secrets
+kubectl apply -f k8s/secrets.generated.yaml
+
+# Or create secrets manually (replace with your encoded values)
+kubectl create secret generic elkzone-secrets \
+  --from-literal=DATABASE_URL=$(echo -n "file:./db/elkzone.db" | base64) \
+  --from-literal=JWT_SECRET=$(echo -n "your-secret" | base64) \
+  --from-literal=REDIS_URL=$(echo -n "redis://redis:6379" | base64) \
+  --from-literal=ACTIVITYPUB_PRIVATE_KEY="$(cat activitypub-private.pem | base64 -w 0)" \
+  --from-literal=ACTIVITYPUB_PUBLIC_KEY="$(cat activitypub-public.pem | base64 -w 0)" \
+  -n elkzone-prod
+```
+
+**Secrets Template Reference:**
+See `k8s/secrets.yaml` for complete template with all required placeholders:
+- `<BASE64_ENCODED_DATABASE_URL>`
+- `<BASE64_ENCODED_JWT_SECRET>`
+- `<BASE64_ENCODED_REDIS_URL>`
+- `<BASE64_ENCODED_ACTIVITYPUB_PRIVATE_KEY>`
+- `<BASE64_ENCODED_ACTIVITYPUB_PUBLIC_KEY>`
+- `<BASE64_ENCODED_GRAFANA_PASSWORD>`
+
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
 ### Step 4: Deploy Application
 
 ```bash

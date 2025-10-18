@@ -1,0 +1,47 @@
+groups:
+- name: federation-intelligence
+  rules:
+  - record: federation_health_score
+    expr: |
+      (
+        avg(federation_service_up) * 0.4 +
+        avg(federation_peer_reputation) * 0.3 +
+        avg(rate(federation_requests_success_total[5m]) / rate(federation_requests_total[5m])) * 0.3
+      )
+  
+  - record: federation_service_status
+    expr: |
+      label_replace(
+        label_replace(
+          federation_service_up,
+          "status", "healthy", "up", "1"
+        ),
+        "status", "unhealthy", "up", "0"
+      )
+  
+  - alert: FederationHealthDegraded
+    expr: federation_health_score < 0.7
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Federation health is degraded"
+      description: "Federation health score is {{ $value }} (threshold: 0.7)"
+  
+  - alert: FederationServiceDown
+    expr: federation_service_up == 0
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Federation service is down"
+      description: "Service {{ $labels.service }} has been down for more than 2 minutes"
+  
+  - alert: PeerReputationLow
+    expr: federation_peer_reputation < 0.3
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Peer reputation is low"
+      description: "Peer {{ $labels.peer }} has reputation {{ $value }} (threshold: 0.3)"

@@ -1,0 +1,23 @@
+{
+  "subject": "acct:system@elkzone.example.com",
+  "aliases": [
+    "https://elkzone.example.com/@system",
+    "https://elkzone.example.com/users/system"
+  ],
+  "links": [
+    {
+      "rel": "http://webfinger.net/rel/profile-page",
+      "type": "text/html",
+      "href": "https://elkzone.example.com/@system"
+    },
+    {
+      "rel": "self",
+      "type": "application/activity+json",
+      "href": "https://elkzone.example.com/users/system"
+    },
+    {
+      "rel": "http://ostatus.org/schema/1.0/subscribe",
+      "template": "https://elkzone.example.com/authorize_interaction?uri={uri}"
+    }
+  ]
+}

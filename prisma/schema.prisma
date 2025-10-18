@@ -14,7 +14,10 @@ model User {
   id              String   @id @default(cuid())
   email           String   @unique
   username        String   @unique
+<<<<<<< HEAD
   passwordHash    String?  // For authentication
+=======
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
   displayName     String?
   avatar          String?
   banner          String?
@@ -55,11 +58,16 @@ model User {
   stories         Story[]
   notifications   Notification[]
   createdCommunities Community[]
+<<<<<<< HEAD
   profile         UserProfile?
   followedUsers   UserFollow[] @relation("FollowingUser")
   followers       UserFollow[] @relation("FollowedUser")
   blockedUsers    UserBlock[] @relation("BlockingUser")
   blockedBy       UserBlock[] @relation("BlockedUser")
+=======
+  followedUsers   UserFollow[] @relation("FollowingUser")
+  followers       UserFollow[] @relation("FollowedUser")
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
   
   // Live streaming
   liveStreams     LiveStream[]
@@ -71,6 +79,7 @@ model User {
   @@map("users")
 }
 
+<<<<<<< HEAD
 model UserProfile {
   id            String   @id @default(cuid())
   userId        String   @unique
@@ -116,6 +125,8 @@ model UserBlock {
   @@map("user_blocks")
 }
 
+=======
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
 model Thread {
   id              String      @id @default(cuid())
   content         String
@@ -636,6 +647,22 @@ model Notification {
   @@map("notifications")
 }
 
+<<<<<<< HEAD
+=======
+model UserFollow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followedId  String
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("FollowingUser", fields: [followerId], references: [id])
+  followed    User     @relation("FollowedUser", fields: [followedId], references: [id])
+
+  @@unique([followerId, followedId])
+  @@map("user_follows")
+}
+
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
 model TrendingTopic {
   id          String   @id @default(cuid())
   name        String   @unique

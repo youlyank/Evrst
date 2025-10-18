@@ -1,0 +1,49 @@
+{
+    "reputation_system_version": "1.0",
+    "created_at": "2025-10-17T16:18:00.000Z",
+    "scoring_factors": {
+        "reliability": {
+            "weight": 0.3,
+            "metrics": ["uptime", "response_time", "success_rate"]
+        },
+        "content_quality": {
+            "weight": 0.25,
+            "metrics": ["spam_reports", "content_flags", "user_reports"]
+        },
+        "behavior": {
+            "weight": 0.2,
+            "metrics": ["federation_compliance", "protocol_adherence", "interaction_quality"]
+        },
+        "security": {
+            "weight": 0.15,
+            "metrics": ["ssl_validity", "authentication_strength", "vulnerability_scan"]
+        },
+        "performance": {
+            "weight": 0.1,
+            "metrics": ["throughput", "latency", "resource_usage"]
+        }
+    },
+    "scoring_algorithm": {
+        "type": "weighted_average",
+        "decay_function": "exponential",
+        "update_frequency": "1h",
+        "min_data_points": 10
+    },
+    "reputation_levels": {
+        "excellent": {"min": 0.9, "max": 1.0, "privileges": ["full_access", "priority_routing"]},
+        "good": {"min": 0.7, "max": 0.9, "privileges": ["standard_access", "enhanced_features"]},
+        "average": {"min": 0.5, "max": 0.7, "privileges": ["limited_access", "basic_features"]},
+        "poor": {"min": 0.3, "max": 0.5, "privileges": ["restricted_access", "monitoring"]},
+        "bad": {"min": 0.0, "max": 0.3, "privileges": ["quarantine", "manual_review"]}
+    },
+    "auto_actions": {
+        "reputation_boost": {
+            "triggers": ["successful_handshakes", "positive_reports", "long_uptime"],
+            "boost_amount": 0.05
+        },
+        "reputation_penalty": {
+            "triggers": ["failed_handshakes", "spam_reports", "security_incidents"],
+            "penalty_amount": 0.1
+        }
+    }
+}

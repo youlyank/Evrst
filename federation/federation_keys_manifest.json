@@ -1,0 +1,77 @@
+{
+  "manifest_version": "1.0",
+  "generated_at": "2025-10-17T14:43:45+00:00",
+  "domain": "elkzone.example.com",
+  "federation_services": {
+    "akkoma": {
+      "service": "ActivityPub",
+      "key_type": "RSA 4096",
+      "key_files": {
+        "private": "federation/akkoma/keys/private.pem",
+        "public": "federation/akkoma/keys/public.pem"
+      },
+      "endpoints": {
+        "webfinger": "https://elkzone.example.com/.well-known/webfinger",
+        "host_meta": "https://elkzone.example.com/.well-known/host-meta",
+        "nodeinfo": "https://elkzone.example.com/nodeinfo/2.0"
+      },
+      "fingerprint": "1fe3bd3cb130f75158fe22032c42b821e43086af1bff8226e49aebc387ec14b6"
+    },
+    "matrix": {
+      "service": "Matrix Homeserver",
+      "key_type": "Ed25519",
+      "key_files": {
+        "private": "federation/matrix/keys/ed25519.key",
+        "server": "federation/matrix/keys/server.key"
+      },
+      "endpoints": {
+        "server": "https://matrix.elkzone.example.com",
+        "well_known": "https://elkzone.example.com/.well-known/matrix/server",
+        "client": "https://elkzone.example.com/.well-known/matrix/client"
+      },
+      "fingerprint": "7933d5e0a539e92e8d75506afd318b7d46a37bbf47a4d00c4e75579794a6d2a0"
+    },
+    "peertube": {
+      "service": "PeerTube Video Federation",
+      "key_type": "RSA 4096",
+      "key_files": {
+        "private": "federation/peertube/keys/private.pem",
+        "public": "federation/peertube/keys/public.pem"
+      },
+      "endpoints": {
+        "webfinger": "https://videos.elkzone.example.com/.well-known/webfinger",
+        "nodeinfo": "https://videos.elkzone.example.com/nodeinfo/2.0",
+        "activitypub": "https://videos.elkzone.example.com/accounts/peertube"
+      },
+      "fingerprint": "ca373b3de942366ea779b52940bed09138112c5b86f27a170bb3f53aa37814ef"
+    },
+    "jitsi": {
+      "service": "Jitsi Video Conferencing",
+      "key_type": "ECDSA 256",
+      "key_files": {
+        "private": "federation/jitsi/keys/private.pem",
+        "public": "federation/jitsi/keys/public.pem"
+      },
+      "endpoints": {
+        "meet": "https://meet.elkzone.example.com",
+        "config": "https://elkzone.example.com/.well-known/jitsi-config.json",
+        "turn": "turn:meet.elkzone.example.com:443"
+      },
+      "fingerprint": "86c5fc865350f342b79dae7e96c57f05ff78dbe6f17afa7eba07add8a2accec5"
+    }
+  },
+  "security_notes": [
+    "All private keys are stored with 600 permissions",
+    "Public keys are stored with 644 permissions",
+    "Keys should be rotated every 90 days",
+    "Backup keys securely in offline storage",
+    "Never commit private keys to version control"
+  ],
+  "next_steps": [
+    "Configure well-known files for federation discovery",
+    "Test federation handshakes with remote instances",
+    "Update DNS records for federation subdomains",
+    "Configure firewalls for federation ports",
+    "Monitor federation traffic and health"
+  ]
+}

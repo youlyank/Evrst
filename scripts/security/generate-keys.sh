@@ -103,7 +103,11 @@ generate_grafana_password() {
 generate_env_file() {
     print_status "Generating complete .env.prod file..."
     
+<<<<<<< HEAD
     local env_file="/opt/elkzone/.env.prod.generated"
+=======
+    local env_file="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/.env.prod.generated"
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
     
     cat > "$env_file" << EOF
 # ===========================================
@@ -162,7 +166,11 @@ EOF
 generate_k8s_secrets() {
     print_status "Generating Kubernetes secrets file..."
     
+<<<<<<< HEAD
     local secrets_file="/opt/elkzone/k8s/secrets.generated.yaml"
+=======
+    local secrets_file="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/k8s/secrets.generated.yaml"
+>>>>>>> 3e6010f31bad40bef18ce5f8790f80e2506e21ef
     
     # Generate all secrets
     local db_password=$(generate_secure_string 32)

@@ -1,0 +1,15 @@
+# ELK.Zone 2.0 - Docker Key Rotation
+# Add this to your system crontab with: crontab -e
+
+# Environment variables
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Daily key rotation check (Docker)
+0 2 * * * cd /home/z/my-project && docker-compose -f docker-compose.prod.yml exec -T backend /app/scripts/federation/auto-key-rotation.sh --check >> /home/z/my-project/logs/key-rotation.log 2>&1
+
+# Weekly key rotation (Docker)
+0 3 * * 0 cd /home/z/my-project && docker-compose -f docker-compose.prod.yml exec -T backend /app/scripts/federation/auto-key-rotation.sh >> /home/z/my-project/logs/key-rotation.log 2>&1
+
+# Monthly cleanup (Docker)
+0 4 1 * * cd /home/z/my-project && docker-compose -f docker-compose.prod.yml exec -T backend /app/scripts/federation/auto-key-rotation.sh --cleanup >> /home/z/my-project/logs/key-rotation.log 2>&1

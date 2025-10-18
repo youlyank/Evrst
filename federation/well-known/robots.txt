@@ -1,0 +1,33 @@
+# ELK.Zone 2.0 robots.txt
+# Allow federation crawlers and bots
+
+User-agent: *
+Allow: /
+Allow: /.well-known/
+Allow: /nodeinfo
+Allow: /users/
+Allow: /@/
+Allow: /tags/
+
+# Disallow admin and sensitive areas
+Disallow: /admin/
+Disallow: /api/admin/
+Disallow: /settings/
+Disallow: /messages/
+
+# Federation-specific rules
+User-agent: Mastodon
+Allow: /
+
+User-agent: Pleroma
+Allow: /
+
+User-agent: Matrix-Synapse
+Allow: /.well-known/matrix/
+
+User-agent: PeerTube-Crawler
+Allow: /
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://elkzone.example.com/sitemap.xml

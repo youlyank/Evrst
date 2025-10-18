@@ -1,0 +1,35 @@
+{
+  "hosts": {
+    "meet.elkzone.example.com": {
+      "domain": "meet.elkzone.example.com",
+      "bosh": "https://meet.elkzone.example.com/http-bind",
+      "websocket": "wss://meet.elkzone.example.com/xmpp-websocket",
+      "muc": "muc.meet.elkzone.example.com",
+      "focus": "focus.meet.elkzone.example.com"
+    }
+  },
+  "conference": {
+    "domain": "muc.meet.elkzone.example.com",
+    "room_prefix": "__"
+  },
+  "bridge": {
+    "enabled": true,
+    "domain": "matrix.elkzone.example.com"
+  },
+  "features": {
+    "livestreaming": true,
+    "recording": true,
+    "transcription": true,
+    "backgrounds": true
+  },
+  "security": {
+    "turn": {
+      "urls": [
+        "turn:meet.elkzone.example.com:443?transport=tcp",
+        "turn:meet.elkzone.example.com:443?transport=udp"
+      ],
+      "username": "turnuser",
+      "credential": "turnpassword"
+    }
+  }
+}

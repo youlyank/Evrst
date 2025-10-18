@@ -1,0 +1,54 @@
+{
+  "version": "2.0",
+  "software": {
+    "name": "elkzone",
+    "version": "2.0.0",
+    "repository": "https://github.com/your-org/elkzone-2.0",
+    "homepage": "https://elkzone.example.com"
+  },
+  "protocols": [
+    "activitypub",
+    "matrix",
+    "peertube",
+    "jitsi"
+  ],
+  "services": {
+    "inbound": [
+      "activitypub",
+      "matrix",
+      "peertube"
+    ],
+    "outbound": [
+      "activitypub",
+      "matrix",
+      "peertube"
+    ]
+  },
+  "openRegistrations": true,
+  "usage": {
+    "users": {
+      "total": 0,
+      "activeHalfyear": 0,
+      "activeMonth": 0
+    },
+    "localPosts": 0,
+    "localComments": 0
+  },
+  "metadata": {
+    "nodeName": "ELK.Zone 2.0",
+    "nodeDescription": "Federated social media platform combining the best of Twitter, Reddit, Discord, Instagram, and Twitch",
+    "maintainer": {
+      "name": "ELK.Zone Team",
+      "email": "admin@elkzone.example.com"
+    },
+    "federation": {
+      "enabled": true,
+      "services": [
+        "akkoma",
+        "matrix", 
+        "peertube",
+        "jitsi"
+      ]
+    }
+  }
+}
