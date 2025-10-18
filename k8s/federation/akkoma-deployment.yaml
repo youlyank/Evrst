@@ -1,0 +1,169 @@
+# Akkoma (ActivityPub) Federation Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: akkoma
+  namespace: elkzone-prod
+  labels:
+    app: akkoma
+    service: activitypub
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: akkoma
+  template:
+    metadata:
+      labels:
+        app: akkoma
+        service: activitypub
+    spec:
+      containers:
+      - name: akkoma
+        image: akkoma/akkoma:latest
+        ports:
+        - containerPort: 4000
+        env:
+        - name: MIX_ENV
+          value: "prod"
+        - name: DOMAIN
+          value: "akkoma.elk.zone"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: akkoma-secrets
+              key: DATABASE_URL
+        - name: SECRET_KEY_BASE
+          valueFrom:
+            secretKeyRef:
+              name: akkoma-secrets
+              key: SECRET_KEY_BASE
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: uploads
+          mountPath: /var/lib/akkoma/uploads
+        - name: config
+          mountPath: /etc/akkoma/config.exs
+          subPath: config.exs
+      volumes:
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: akkoma-uploads-pvc
+      - name: config
+        configMap:
+          name: akkoma-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: akkoma
+  namespace: elkzone-prod
+  labels:
+    app: akkoma
+    service: activitypub
+spec:
+  selector:
+    app: akkoma
+  ports:
+  - name: http
+    port: 4000
+    targetPort: 4000
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: akkoma-ingress
+  namespace: elkzone-prod
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - akkoma.elk.zone
+    secretName: akkoma-tls
+  rules:
+  - host: akkoma.elk.zone
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: akkoma
+            port:
+              number: 4000
+---
+# Akkoma Database (PostgreSQL)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: akkoma-postgres
+  namespace: elkzone-prod
+  labels:
+    app: akkoma-postgres
+    service: activitypub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: akkoma-postgres
+  template:
+    metadata:
+      labels:
+        app: akkoma-postgres
+        service: activitypub
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        env:
+        - name: POSTGRES_DB
+          value: "akkoma"
+        - name: POSTGRES_USER
+          value: "akkoma"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: akkoma-secrets
+              key: POSTGRES_PASSWORD
+        ports:
+        - containerPort: 5432
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: akkoma-postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: akkoma-postgres
+  namespace: elkzone-prod
+  labels:
+    app: akkoma-postgres
+    service: activitypub
+spec:
+  selector:
+    app: akkoma-postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP

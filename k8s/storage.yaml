@@ -1,0 +1,55 @@
+# Persistent Volume Claims for application storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: elkzone-uploads-pvc
+  namespace: elkzone-prod
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: gp2  # AWS EBS storage class
+---
+# Database storage (if using self-hosted PostgreSQL)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: elkzone-postgres-pvc
+  namespace: elkzone-prod
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: gp2
+---
+# Redis storage (if using self-hosted Redis)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: elkzone-redis-pvc
+  namespace: elkzone-prod
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: gp2
+---
+# Staging storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: elkzone-uploads-pvc
+  namespace: elkzone-staging
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: gp2

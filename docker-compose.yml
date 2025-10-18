@@ -1,0 +1,231 @@
+version: '3.8'
+
+services:
+  # ELK.Zone Main Application
+  elkzone:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./dev.db
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - PROMETHEUS_URL=http://prometheus:9090
+      - REDIS_URL=redis://redis:6379
+      - SOCKET_URL=http://socket-server:3001
+    depends_on:
+      - redis
+      - prometheus
+      - postgres
+    volumes:
+      - ./data:/app/data
+    networks:
+      - elkzone-network
+
+  # Socket.IO Server for Real-time Features
+  socket-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.socket
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - elkzone-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=elkzone
+      - POSTGRES_USER=elkzone
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - elkzone-network
+
+  # Redis for Caching and Sessions
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - elkzone-network
+
+  # Prometheus for Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - elkzone-network
+
+  # Grafana for Visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - elkzone-network
+
+  # Akkoma (ActivityPub/Mastodon-compatible)
+  akkoma:
+    image: akkoma:latest
+    ports:
+      - "4000:4000"
+    environment:
+      - MIX_ENV=prod
+      - DB_HOST=postgres
+      - DB_USER=elkzone
+      - DB_PASS=${POSTGRES_PASSWORD}
+      - DB_NAME=elkzone
+    depends_on:
+      - postgres
+    volumes:
+      - akkoma_data:/opt/akkoma/uploads
+      - ./config/akkoma:/etc/akkoma
+    networks:
+      - elkzone-network
+
+  # Matrix Synapse Server
+  synapse:
+    image: matrixdotorg/synapse:latest
+    ports:
+      - "8008:8008"
+    environment:
+      - SYNAPSE_SERVER_NAME=matrix.elkzone.com
+      - SYNAPSE_REPORT_STATS=no
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=elkzone
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=elkzone
+    depends_on:
+      - postgres
+    volumes:
+      - synapse_data:/data
+      - ./config/synapse:/etc/synapse
+    networks:
+      - elkzone-network
+
+  # PeerTube for Video Streaming
+  peertube:
+    image: chocobozzz/peertube:latest
+    ports:
+      - "9000:9000"
+    environment:
+      - PEERTUBE_DB_HOSTNAME=postgres
+      - PEERTUBE_DB_USERNAME=elkzone
+      - PEERTUBE_DB_PASSWORD=${POSTGRES_PASSWORD}
+      - PEERTUBE_WEBSERVER_HOSTNAME=video.elkzone.com
+      - PEERTUBE_TRUST_PROXY=["127.0.0.1", "172.17.0.0/16"]
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - peertube_data:/data
+      - ./config/peertube:/config
+    networks:
+      - elkzone-network
+
+  # Jitsi Meet for Video Calls
+  jitsi:
+    image: jitsi/web:latest
+    ports:
+      - "8080:80"
+    environment:
+      - JITSI_PROSODY_DOMAIN=meet.elkzone.com
+      - JITSI_PUBLIC_URL=https://meet.elkzone.com
+    depends_on:
+      - jitsi-prosody
+    networks:
+      - elkzone-network
+
+  jitsi-prosody:
+    image: jitsi/prosody:latest
+    environment:
+      - JITSI_PROSODY_DOMAIN=meet.elkzone.com
+    networks:
+      - elkzone-network
+
+  jitsi-jicofo:
+    image: jitsi/jicofo:latest
+    environment:
+      - JITSI_PROSODY_DOMAIN=meet.elkzone.com
+    depends_on:
+      - jitsi-prosody
+    networks:
+      - elkzone-network
+
+  jitsi-jvb:
+    image: jitsi/jvb:latest
+    environment:
+      - JITSI_PROSODY_DOMAIN=meet.elkzone.com
+      - DOCKER_HOST_ADDRESS=127.0.0.1
+    depends_on:
+      - jitsi-prosody
+    networks:
+      - elkzone-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./config/nginx/ssl:/etc/nginx/ssl
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - elkzone
+      - akkoma
+      - synapse
+      - peertube
+      - jitsi
+      - grafana
+    networks:
+      - elkzone-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+  akkoma_data:
+  synapse_data:
+  peertube_data:
+
+networks:
+  elkzone-network:
+    driver: bridge

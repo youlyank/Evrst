@@ -1,0 +1,72 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+scrape_configs:
+  # ELK.Zone Application
+  - job_name: 'elkzone'
+    static_configs:
+      - targets: ['elkzone:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Socket.IO Server
+  - job_name: 'socket-server'
+    static_configs:
+      - targets: ['socket-server:3001']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter (if available)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # PostgreSQL Exporter
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  # Redis Exporter
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # Nginx Exporter
+  - job_name: 'nginx-exporter'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+
+  # Akkoma Metrics
+  - job_name: 'akkoma'
+    static_configs:
+      - targets: ['akkoma:4000']
+    metrics_path: '/api/v1/pleroma/app/metrics'
+    scrape_interval: 30s
+
+  # Matrix Synapse Metrics
+  - job_name: 'synapse'
+    static_configs:
+      - targets: ['synapse:9000']
+    metrics_path: '/_synapse/metrics'
+    scrape_interval: 30s
+
+  # PeerTube Metrics
+  - job_name: 'peertube'
+    static_configs:
+      - targets: ['peertube:9000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s

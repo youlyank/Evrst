@@ -1,0 +1,720 @@
+// ELK.Zone 2.0 - Federated Social Media Platform
+// Combining Akkoma, Matrix, Reddit-style communities, Threads/Twitter feed, Stories, live streaming
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  username        String   @unique
+  passwordHash    String?  // For authentication
+  displayName     String?
+  avatar          String?
+  banner          String?
+  bio             String?
+  karma           Int      @default(0)
+  isVerified      Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  isPrivate       Boolean  @default(false)
+  lastActiveAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Federation fields
+  federatedId     String?  @unique // ActivityPub ID
+  instance        String?  // Origin instance
+  inboxUrl        String?  // ActivityPub inbox
+  outboxUrl       String?  // ActivityPub outbox
+  followersUrl    String?  // ActivityPub followers
+  followingUrl    String?  // ActivityPub following
+  
+  // Matrix integration
+  matrixUserId    String?  @unique // Matrix user ID
+  matrixAccessToken String? // Matrix access token
+  
+  // Preferences
+  theme           String   @default("light")
+  language        String   @default("en")
+  timezone        String   @default("UTC")
+  notificationsEnabled Boolean @default(true)
+  
+  // Relations
+  posts           Thread[]
+  comments        Comment[]
+  votes           Vote[]
+  communities     CommunityMember[]
+  messages        Message[]
+  sentMessages    Message[] @relation("MessageSender")
+  stories         Story[]
+  notifications   Notification[]
+  createdCommunities Community[]
+  profile         UserProfile?
+  followedUsers   UserFollow[] @relation("FollowingUser")
+  followers       UserFollow[] @relation("FollowedUser")
+  blockedUsers    UserBlock[] @relation("BlockingUser")
+  blockedBy       UserBlock[] @relation("BlockedUser")
+  
+  // Live streaming
+  liveStreams     LiveStream[]
+  
+  // Voice/Video calls
+  callParticipants CallParticipant[]
+  hostedCalls     VoiceCall[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  username      String   @unique
+  displayName   String?
+  avatarUrl     String?
+  bio           String?
+  federated     Boolean  @default(false)
+  matrixId      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@map("user_profiles")
+}
+
+model UserFollow {
+  id            String   @id @default(cuid())
+  followerId    String
+  followingId   String
+  createdAt     DateTime @default(now())
+
+  follower      User     @relation("FollowingUser", fields: [followerId], references: [id])
+  following     User     @relation("FollowedUser", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@map("user_follows")
+}
+
+model UserBlock {
+  id            String   @id @default(cuid())
+  blockerId     String
+  blockedId     String
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  blocker       User     @relation("BlockingUser", fields: [blockerId], references: [id])
+  blocked       User     @relation("BlockedUser", fields: [blockedId], references: [id])
+
+  @@unique([blockerId, blockedId])
+  @@map("user_blocks")
+}
+
+model Thread {
+  id              String      @id @default(cuid())
+  content         String
+  type            ThreadType  @default(TEXT)
+  imageUrl        String?
+  videoUrl        String?
+  linkUrl         String?
+  linkPreview     Json?       // Link preview data
+  upvotes         Int         @default(0)
+  downvotes       Int         @default(0)
+  reposts         Int         @default(0)
+  commentCount    Int         @default(0)
+  views           Int         @default(0)
+  isPinned        Boolean     @default(false)
+  isLocked        Boolean     @default(false)
+  isDeleted       Boolean     @default(false)
+  isSensitive     Boolean     @default(false)
+  language        String?     @default("en")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  // Threading
+  parentId        String?
+  parentThread    Thread?     @relation("ThreadReplies", fields: [parentId], references: [id])
+  replies         Thread[]    @relation("ThreadReplies")
+  
+  // Federation
+  federatedId     String?     @unique
+  instance        String?
+  activityPubUrl  String?
+  
+  // Relations
+  authorId        String
+  author          User        @relation(fields: [authorId], references: [id])
+  communityId     String?
+  community       Community?  @relation(fields: [communityId], references: [id])
+  comments        Comment[]
+  votes           Vote[]
+  mentions        ThreadMention[]
+  hashtags        ThreadHashtag[]
+  media           ThreadMedia[]
+  
+  // Live stream reference
+  threadId        String?   @unique
+  liveStream      LiveStream? @relation("LiveStreamThread", fields: [threadId], references: [id])
+
+  @@map("threads")
+}
+
+model ThreadMedia {
+  id          String   @id @default(cuid())
+  threadId    String
+  type        MediaType
+  url         String
+  thumbnailUrl String?
+  width       Int?
+  height      Int?
+  size        Int?
+  mimeType    String?
+  alt         String?
+  createdAt   DateTime @default(now())
+  
+  thread      Thread   @relation(fields: [threadId], references: [id])
+
+  @@map("thread_media")
+}
+
+model ThreadHashtag {
+  id          String   @id @default(cuid())
+  threadId    String
+  hashtag     String
+  createdAt   DateTime @default(now())
+  
+  thread      Thread   @relation(fields: [threadId], references: [id])
+
+  @@unique([threadId, hashtag])
+  @@map("thread_hashtags")
+}
+
+model ThreadMention {
+  id          String   @id @default(cuid())
+  threadId    String
+  mentionedUserId String
+  createdAt   DateTime @default(now())
+  
+  thread      Thread   @relation(fields: [threadId], references: [id])
+
+  @@unique([threadId, mentionedUserId])
+  @@map("thread_mentions")
+}
+
+model Community {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  displayName     String
+  description     String?
+  icon            String?
+  banner          String?
+  rules           String?
+  color           String?  @default("#0079d3")
+  isPrivate       Boolean  @default(false)
+  isNSFW          Boolean  @default(false)
+  memberCount     Int      @default(0)
+  postCount       Int      @default(0)
+  subscriberCount Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Federation
+  federatedId     String?  @unique
+  instance        String?
+  
+  // Relations
+  creatorId       String
+  creator         User     @relation(fields: [creatorId], references: [id])
+  posts           Thread[]
+  members         CommunityMember[]
+  moderators      CommunityModerator[]
+  bans            CommunityBan[]
+  flairs          CommunityFlair[]
+  events          CommunityEvent[]
+
+  @@map("communities")
+}
+
+model CommunityMember {
+  id          String   @id @default(cuid())
+  userId      String
+  communityId String
+  role        CommunityRole @default(MEMBER)
+  joinedAt    DateTime @default(now())
+  
+  user        User      @relation(fields: [userId], references: [id])
+  community   Community @relation(fields: [communityId], references: [id])
+
+  @@unique([userId, communityId])
+  @@map("community_members")
+}
+
+model CommunityModerator {
+  id          String   @id @default(cuid())
+  userId      String
+  communityId String
+  role        String   @default("moderator") // moderator, admin
+  permissions String   @default("") // JSON string of permissions
+  assignedAt  DateTime @default(now())
+  
+  community   Community @relation(fields: [communityId], references: [id])
+
+  @@unique([userId, communityId])
+  @@map("community_moderators")
+}
+
+model CommunityBan {
+  id          String   @id @default(cuid())
+  userId      String
+  communityId String
+  reason      String?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  
+  community   Community @relation(fields: [communityId], references: [id])
+
+  @@unique([userId, communityId])
+  @@map("community_bans")
+}
+
+model CommunityFlair {
+  id          String   @id @default(cuid())
+  communityId String
+  text        String
+  backgroundColor String?
+  textColor   String?
+  isEnabled   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  community   Community @relation(fields: [communityId], references: [id])
+
+  @@map("community_flairs")
+}
+
+model CommunityEvent {
+  id          String   @id @default(cuid())
+  communityId String
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime?
+  location    String?
+  isOnline    Boolean  @default(false)
+  maxAttendees Int?
+  createdAt   DateTime @default(now())
+  
+  community   Community @relation(fields: [communityId], references: [id])
+
+  @@map("community_events")
+}
+
+model Comment {
+  id            String   @id @default(cuid())
+  content       String
+  upvotes       Int      @default(0)
+  downvotes     Int      @default(0)
+  replyCount    Int      @default(0)
+  isDeleted     Boolean  @default(false)
+  isEdited      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Threading
+  parentId      String?
+  parent        Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies       Comment[] @relation("CommentReplies")
+  
+  // Relations
+  authorId      String
+  author        User     @relation(fields: [authorId], references: [id])
+  threadId      String
+  thread        Thread   @relation(fields: [threadId], references: [id])
+  votes         Vote[]
+  mentions      CommentMention[]
+
+  @@map("comments")
+}
+
+model CommentMention {
+  id            String   @id @default(cuid())
+  commentId     String
+  mentionedUserId String
+  createdAt     DateTime @default(now())
+  
+  comment       Comment  @relation(fields: [commentId], references: [id])
+
+  @@unique([commentId, mentionedUserId])
+  @@map("comment_mentions")
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  type      VoteType
+  createdAt DateTime @default(now())
+
+  // Relations
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  threadId  String?
+  thread    Thread?  @relation(fields: [threadId], references: [id])
+  commentId String?
+  comment   Comment? @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, threadId])
+  @@unique([userId, commentId])
+  @@map("votes")
+}
+
+model Message {
+  id            String      @id @default(cuid())
+  content       String
+  type          MessageType @default(TEXT)
+  imageUrl      String?
+  videoUrl      String?
+  fileUrl       String?
+  fileName      String?
+  fileSize      Int?
+  isEdited      Boolean     @default(false)
+  isEncrypted   Boolean     @default(false)
+  replyToId     String?
+  threadId      String?     // Matrix thread ID
+  roomId        String?     // Matrix room ID
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  senderId      String
+  sender        User        @relation("MessageSender", fields: [senderId], references: [id])
+  receiverId    String?
+  receiver      User?       @relation(fields: [receiverId], references: [id])
+  chatRoomId    String?
+  chatRoom      ChatRoom?   @relation(fields: [chatRoomId], references: [id])
+  replyTo       Message?    @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies       Message[]   @relation("MessageReplies")
+  reactions     MessageReaction[]
+  mentions      MessageMention[]
+
+  @@map("messages")
+}
+
+model MessageReaction {
+  id          String   @id @default(cuid())
+  messageId   String
+  userId      String
+  emoji       String
+  createdAt   DateTime @default(now())
+  
+  message     Message  @relation(fields: [messageId], references: [id])
+
+  @@unique([messageId, userId, emoji])
+  @@map("message_reactions")
+}
+
+model MessageMention {
+  id          String   @id @default(cuid())
+  messageId   String
+  mentionedUserId String
+  createdAt   DateTime @default(now())
+  
+  message     Message  @relation(fields: [messageId], references: [id])
+
+  @@unique([messageId, mentionedUserId])
+  @@map("message_mentions")
+}
+
+model ChatRoom {
+  id          String   @id @default(cuid())
+  name        String?
+  description String?
+  avatar      String?
+  isGroup     Boolean  @default(false)
+  isPrivate   Boolean  @default(false)
+  isEncrypted Boolean  @default(false)
+  maxMembers  Int?
+  matrixRoomId String? @unique // Matrix room ID
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  messages    Message[]
+  members     ChatRoomMember[]
+  calls       VoiceCall[]
+
+  @@map("chat_rooms")
+}
+
+model ChatRoomMember {
+  id           String   @id @default(cuid())
+  userId       String
+  chatRoomId   String
+  role         String   @default("member") // admin, moderator, member
+  joinedAt     DateTime @default(now())
+  lastReadAt   DateTime @default(now())
+  isMuted      Boolean  @default(false)
+  isBanned     Boolean  @default(false)
+  
+  chatRoom     ChatRoom @relation(fields: [chatRoomId], references: [id])
+  
+  @@unique([userId, chatRoomId])
+  @@map("chat_room_members")
+}
+
+model VoiceCall {
+  id          String   @id @default(cuid())
+  chatRoomId  String
+  hostId      String
+  title       String?
+  description String?
+  isVideo     Boolean  @default(false)
+  isRecording Boolean  @default(false)
+  maxParticipants Int?
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+  jitsiRoomId String?  @unique // Jitsi room ID
+  
+  // Relations
+  chatRoom    ChatRoom @relation(fields: [chatRoomId], references: [id])
+  host        User     @relation(fields: [hostId], references: [id])
+  participants CallParticipant[]
+
+  @@map("voice_calls")
+}
+
+model CallParticipant {
+  id          String   @id @default(cuid())
+  callId      String
+  userId      String
+  joinedAt    DateTime @default(now())
+  leftAt      DateTime?
+  isAudioOn   Boolean  @default(true)
+  isVideoOn   Boolean  @default(false)
+  isScreenSharing Boolean @default(false)
+  
+  call        VoiceCall @relation(fields: [callId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@unique([callId, userId])
+  @@map("call_participants")
+}
+
+model Story {
+  id          String   @id @default(cuid())
+  imageUrl    String
+  videoUrl    String?
+  duration    Int?     // Duration in seconds
+  expiresAt   DateTime
+  isPrivate   Boolean  @default(false)
+  viewers     Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  views       StoryView[]
+  reactions   StoryReaction[]
+  mentions    StoryMention[]
+
+  @@map("stories")
+}
+
+model StoryView {
+  id          String   @id @default(cuid())
+  userId      String
+  storyId     String
+  viewedAt    DateTime @default(now())
+
+  story       Story    @relation(fields: [storyId], references: [id])
+
+  @@unique([userId, storyId])
+  @@map("story_views")
+}
+
+model StoryReaction {
+  id          String   @id @default(cuid())
+  storyId     String
+  userId      String
+  emoji       String
+  createdAt   DateTime @default(now())
+  
+  story       Story    @relation(fields: [storyId], references: [id])
+
+  @@unique([storyId, userId, emoji])
+  @@map("story_reactions")
+}
+
+model StoryMention {
+  id          String   @id @default(cuid())
+  storyId     String
+  mentionedUserId String
+  createdAt   DateTime @default(now())
+  
+  story       Story    @relation(fields: [storyId], references: [id])
+
+  @@unique([storyId, mentionedUserId])
+  @@map("story_mentions")
+}
+
+model LiveStream {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String?
+  tags        String   @default("") // JSON string of tags
+  thumbnailUrl String?
+  streamKey   String   @unique
+  isLive      Boolean  @default(false)
+  isPrivate   Boolean  @default(false)
+  maxViewers  Int?
+  viewerCount Int      @default(0)
+  duration    Int      @default(0) // Duration in seconds
+  quality     String   @default("720p")
+  latency     String   @default("low")
+  startedAt   DateTime?
+  endedAt     DateTime?
+  scheduledFor DateTime?
+  peertubeId  String?  @unique // PeerTube video ID
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  streamerId  String
+  streamer    User     @relation(fields: [streamerId], references: [id])
+  thread      Thread?  @relation("LiveStreamThread")
+  views       StreamView[]
+  chat        StreamChat[]
+
+  @@map("live_streams")
+}
+
+model StreamView {
+  id          String   @id @default(cuid())
+  streamId    String
+  userId      String
+  joinedAt    DateTime @default(now())
+  leftAt      DateTime?
+  duration    Int      @default(0) // Watch duration in seconds
+
+  stream      LiveStream @relation(fields: [streamId], references: [id])
+
+  @@unique([streamId, userId])
+  @@map("stream_views")
+}
+
+model StreamChat {
+  id          String   @id @default(cuid())
+  streamId    String
+  userId      String
+  message     String
+  isModerated Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  stream      LiveStream @relation(fields: [streamId], references: [id])
+
+  @@map("stream_chat")
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  type        NotificationType
+  title       String
+  message     String
+  data        Json?            // Additional notification data
+  isRead      Boolean          @default(false)
+  isPush      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  // Relations
+  userId      String
+  user        User             @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model TrendingTopic {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  query       String
+  posts       Int      @default(0)
+  growth      Float    @default(0)
+  category    String?
+  location    String?
+  startedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("trending_topics")
+}
+
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  eventType   String
+  userId      String?
+  data        Json
+  timestamp   DateTime @default(now())
+  ip          String?
+  userAgent   String?
+  referer     String?
+
+  @@map("analytics_events")
+}
+
+// Enums
+enum ThreadType {
+  TEXT
+  IMAGE
+  VIDEO
+  LINK
+  POLL
+  LIVE
+  REPOST
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+  REACTION
+  SYSTEM
+}
+
+enum NotificationType {
+  MENTION
+  REPLY
+  UPVOTE
+  FOLLOW
+  MESSAGE
+  REPOST
+  COMMUNITY_INVITE
+  POST_APPROVED
+  STREAM_START
+  STORY_REACTION
+  COMMENT_REPLY
+  COMMUNITY_POST
+  TRENDING_POST
+}
+
+enum CommunityRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+  OWNER
+}
